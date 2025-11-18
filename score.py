@@ -38,8 +38,8 @@ def make_score_fn(weights: np.ndarray, means: np.ndarray, covs: np.ndarray, sche
     def score_fn(x: np.ndarray, idx: int) -> np.ndarray:
         return gmm_time_marginal_score(
             x,
-            alpha=float(schedule.alpha[idx]),
-            sigma=float(schedule.sigma[idx]),
+            alpha=float(schedule["alpha"][idx]),
+            sigma=float(schedule["sigma"][idx]),
             weights=weights,
             means=means,
             covs=covs,

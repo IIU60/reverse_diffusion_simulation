@@ -10,10 +10,10 @@ def reverse_sde_sampler(
     callback: Optional[Callable[[np.ndarray, int], None]] = None,
 ):
     x = rng.standard_normal((n_particles, 2))
-    total_steps = schedule.t.shape[0] - 1
+    total_steps = schedule["t"].shape[0] - 1
     for idx in range(total_steps, 0, -1):
-        dt = schedule.t[idx] - schedule.t[idx - 1]
-        beta_t = schedule.beta[idx]
+        dt = schedule["t"][idx] - schedule["t"][idx - 1]
+        beta_t = schedule["beta"][idx]
         drift = -0.5 * beta_t * x - beta_t * score_fn(x, idx)
         noise = rng.standard_normal(x.shape)
         diffusion = np.sqrt(beta_t * dt) * noise
@@ -35,12 +35,12 @@ def probability_flow_ode(
     x = rng.standard_normal((n_particles, 2))
 
     def ode_func(state, idx):
-        beta_t = schedule.beta[idx]
+        beta_t = schedule["beta"][idx]
         return -0.5 * beta_t * state - 0.5 * beta_t * score_fn(state, idx)
 
-    total_steps = schedule.t.shape[0] - 1
+    total_steps = schedule["t"].shape[0] - 1
     for idx in range(total_steps, 0, -1):
-        dt = schedule.t[idx] - schedule.t[idx - 1]
+        dt = schedule["t"][idx] - schedule["t"][idx - 1]
         k1 = ode_func(x, idx)
         k2 = ode_func(x + 0.5 * dt * k1, idx)
         k3 = ode_func(x + 0.5 * dt * k2, idx)

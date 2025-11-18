@@ -4,7 +4,7 @@ import numpy as np
 
 from config import Config
 from shapes import get_shape
-from schedule import build_schedule
+from schedule import make_linear_schedule
 from score import make_score_fn
 from sampler import probability_flow_ode, reverse_sde_sampler
 from viz import save_scatter
@@ -34,11 +34,11 @@ def main():
 
     rng = np.random.default_rng(cfg.seed)
     gmm = get_shape(cfg.shape)
-    schedule = build_schedule(cfg.steps, cfg.beta_min, cfg.beta_max, cfg.total_time)
+    schedule = make_linear_schedule(cfg.steps, cfg.beta_min, cfg.beta_max)
 
-    print("alpha[:3]", schedule.alpha[:3])
-    print("sigma[:3]", schedule.sigma[:3])
-    consistency = np.abs((1 - schedule.alpha ** 2) - schedule.sigma ** 2).max()
+    print("alpha[:3]", schedule["alpha"][:3])
+    print("sigma[:3]", schedule["sigma"][:3])
+    consistency = np.abs((1 - schedule["alpha"] ** 2) - schedule["sigma"] ** 2).max()
     print("abs((1-alpha^2)-sigma^2).max()", consistency)
 
     score_fn = make_score_fn(gmm.pi, gmm.mu, gmm.Sig, schedule)
@@ -51,7 +51,7 @@ def main():
                 cfg.output_dir,
                 cfg.shape,
                 cfg.sampler,
-                t_value=schedule.t[idx],
+                t_value=schedule["t"][idx],
             )
 
     if cfg.sampler == "ode":
