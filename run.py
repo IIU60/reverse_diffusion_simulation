@@ -41,7 +41,7 @@ def main():
     consistency = np.abs((1 - schedule["alpha"] ** 2) - schedule["sigma"] ** 2).max()
     print("abs((1-alpha^2)-sigma^2).max()", consistency)
 
-    score_fn = make_score_fn(gmm.pi, gmm.mu, gmm.Sig, schedule)
+    score_fn = make_score_fn(gmm, schedule)
 
     def callback(x, idx):
         if idx % cfg.save_interval == 0 or idx == 0:
