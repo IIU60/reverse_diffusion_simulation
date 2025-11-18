@@ -5,8 +5,7 @@ import numpy as np
 from config import Config
 from shapes import get_shape
 from schedule import make_linear_schedule
-from score import make_score_fn
-from sampler import probability_flow_ode, reverse_sde_sampler
+from sampler import integrate_reverse_ode, integrate_reverse_sde
 from viz import save_scatter
 
 
@@ -41,8 +40,6 @@ def main():
     consistency = np.abs((1 - schedule["alpha"] ** 2) - schedule["sigma"] ** 2).max()
     print("abs((1-alpha^2)-sigma^2).max()", consistency)
 
-    score_fn = make_score_fn(gmm, schedule)
-
     def callback(x, idx):
         if idx % cfg.save_interval == 0 or idx == 0:
             save_scatter(
@@ -54,10 +51,11 @@ def main():
                 t_value=schedule["t"][idx],
             )
 
+    xT = rng.standard_normal((cfg.n_particles, 2))
     if cfg.sampler == "ode":
-        samples = probability_flow_ode(score_fn, schedule, cfg.n_particles, rng, callback=callback)
+        samples = integrate_reverse_ode(xT, schedule, gmm, steps=None, callback=callback)
     else:
-        samples = reverse_sde_sampler(rng, score_fn, schedule, cfg.n_particles, callback=callback)
+        samples = integrate_reverse_sde(xT, schedule, gmm, steps=None, seed=cfg.seed, callback=callback)
 
     final_path = os.path.join(cfg.output_dir, "final.npy")
     np.save(final_path, samples)
