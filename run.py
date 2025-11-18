@@ -33,7 +33,7 @@ def main():
     cfg.sampler = args.sampler
 
     rng = np.random.default_rng(cfg.seed)
-    weights, means, covs = get_shape(cfg.shape)
+    gmm = get_shape(cfg.shape)
     schedule = build_schedule(cfg.steps, cfg.beta_min, cfg.beta_max, cfg.total_time)
 
     print("alpha[:3]", schedule.alpha[:3])
@@ -41,7 +41,7 @@ def main():
     consistency = np.abs((1 - schedule.alpha ** 2) - schedule.sigma ** 2).max()
     print("abs((1-alpha^2)-sigma^2).max()", consistency)
 
-    score_fn = make_score_fn(weights, means, covs, schedule)
+    score_fn = make_score_fn(gmm.pi, gmm.mu, gmm.Sig, schedule)
 
     def callback(x, idx):
         if idx % cfg.save_interval == 0 or idx == 0:
