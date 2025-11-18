@@ -205,3 +205,9 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Generated demo artifacts
+pca_forward.gif
+pca_reverse_pca.gif
+pca_reverse_kde.gif
+pca_ev_curves.png
