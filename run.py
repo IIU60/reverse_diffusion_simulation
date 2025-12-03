@@ -7,7 +7,7 @@ from shapes import get_shape
 from schedule import make_linear_schedule
 from sampler import integrate_reverse_ode, integrate_reverse_sde
 from score import score_gmm_time_marginal
-from viz import save_frame, save_trails
+from viz import save_frame, save_trails, frames_to_gif
 
 
 def parse_args():
@@ -20,6 +20,18 @@ def parse_args():
     parser.add_argument("--beta_max", type=float, default=None)
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--vis_every", type=int, default=None)
+    parser.add_argument("--gif_fps", type=int, default=5, help="Frames per second for output GIFs.")
+    parser.add_argument(
+        "--gif_final_hold",
+        type=int,
+        default=20,
+        help="Extra copies of the final frame to hold on the clean shape.",
+    )
+    parser.add_argument(
+        "--make_reverse_gif",
+        action="store_true",
+        help="Also create a reverse-time GIF named 'reverse.gif'.",
+    )
     return parser.parse_args()
 
 
@@ -96,6 +108,31 @@ def main():
     np.save(final_path, samples)
     print(f"Saved final samples to {final_path}")
     print(f"Frames saved to {output_dir}")
+
+    # Reverse diffusion GIF (noise -> clean) with a pause on the final clean shape.
+    gif_path = frames_to_gif(
+        output_dir=output_dir,
+        gif_name="reverse.gif",
+        fps=args.gif_fps,
+        final_hold_frames=args.gif_final_hold,
+        reverse=False,
+    )
+    if gif_path is not None:
+        print(f"Saved reverse GIF to {gif_path}")
+    else:
+        print("No frames found for GIF creation.")
+
+    # Optionally, create a forward diffusion GIF (clean -> noise).
+    if args.make_reverse_gif:
+        reverse_gif_path = frames_to_gif(
+            output_dir=output_dir,
+            gif_name="forward.gif",
+            fps=args.gif_fps,
+            final_hold_frames=0,
+            reverse=True,
+        )
+        if reverse_gif_path is not None:
+            print(f"Saved forward GIF to {reverse_gif_path}")
 
 
 if __name__ == "__main__":

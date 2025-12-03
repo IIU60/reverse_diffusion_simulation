@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import os
-from typing import Optional
+from typing import List, Optional
 
+import imageio.v2 as imageio
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -80,3 +81,59 @@ def save_trails(trajs: np.ndarray, output_dir: str, sampler: str, shape: str) ->
     fig.savefig(fname, dpi=150)
     plt.close(fig)
     return fname
+
+
+def _collect_frame_paths(output_dir: str) -> List[str]:
+    """Collect and numerically sort all frame PNGs in an output directory."""
+    ensure_dir(output_dir)
+    frame_files = [
+        f for f in os.listdir(output_dir) if f.startswith("frame_") and f.endswith(".png")
+    ]
+    if not frame_files:
+        return []
+
+    def _frame_index(name: str) -> int:
+        # name pattern: frame_{step:05d}.png
+        stem = os.path.splitext(name)[0]
+        _, idx_str = stem.split("_", 1)
+        return int(idx_str)
+
+    frame_files.sort(key=_frame_index)
+    return [os.path.join(output_dir, f) for f in frame_files]
+
+
+def frames_to_gif(
+    output_dir: str,
+    gif_name: str = "forward.gif",
+    fps: int = 5,
+    final_hold_frames: int = 20,
+    reverse: bool = False,
+) -> Optional[str]:
+    """Convert saved frames in an output directory into a GIF.
+
+    Args:
+        output_dir: Directory containing `frame_*.png` images.
+        gif_name: Name of the GIF file to write.
+        fps: Playback speed (frames per second).
+        final_hold_frames: Number of extra copies of the last frame for a pause.
+        reverse: If True, play frames in reverse order.
+
+    Returns:
+        Full path to the written GIF, or None if no frames were found.
+    """
+    frame_paths = _collect_frame_paths(output_dir)
+    if not frame_paths:
+        return None
+
+    if reverse:
+        frame_paths = list(reversed(frame_paths))
+
+    if final_hold_frames > 0:
+        frame_paths = frame_paths + [frame_paths[-1]] * final_hold_frames
+
+    duration = 1.0 / float(max(fps, 1))
+    images = [imageio.imread(p) for p in frame_paths]
+
+    gif_path = os.path.join(output_dir, gif_name)
+    imageio.mimsave(gif_path, images, duration=duration, loop=0)
+    return gif_path
